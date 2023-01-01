@@ -1,0 +1,11 @@
+replicasCount: 1
+fullName: "sc-bm-ipfs-revproxy-invicta"
+selectorLabel: "sc-bm-ipfs-revproxy-invicta"
+
+containers:
+  router:
+    name: revproxy
+    image: registry.alexstorm.solenopsys.org/sc-bm-ipfs-revproxy-invicta
+    pullPolicy: Always
+    httpPort: 80
+    serviceAccount: "hc-infra"

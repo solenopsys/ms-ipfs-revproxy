@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  {{ .Values.fullName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.selectorLabel }}
+
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.selectorLabel }}
+    spec:
+      serviceAccountName: {{ .Values.containers.router.serviceAccount }}
+      containers:
+        - name:  {{ .Values.containers.router.name}}
+          image:  {{ .Values.containers.router.image}}
+          ports:
+            - containerPort: {{ .Values.containers.router.httpPort}}
+          env:
+            - name: "server.Host"
+              value: {{ .Values.containers.router.httpHost}}
+            - name: "server.Port"
+              value: "{{ .Values.containers.router.httpPort}}"
+            - name: "nodes.Port"
+              value: "{{ .Values.containers.router.servicesPorts}}"

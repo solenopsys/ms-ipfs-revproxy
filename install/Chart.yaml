@@ -1,0 +1,8 @@
+apiVersion: v2
+name: sc-bm-ipfs-revproxy
+version: 0.1.1
+description: IPFS reverse proxy
+icon: "http://alexstorm.solenopsys.org/apps/assets/ipfs-revproxy.svg"
+
+
+
