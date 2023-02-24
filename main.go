@@ -54,7 +54,7 @@ func main() {
 
 	h := &ProxyHandlers{
 		hostTarget: map[string]string{
-			"localhost:8085": "http://ipfs.alexstorm.solenopsys.org/ipfs/QmaLUcpQVs5QdVAHCB6D2C524tMEFors9WkcLRm5BAfh4T/",
+			"uimatrix.solenopsys.org": "http://ipfs.alexstorm.solenopsys.org/ipfs/QmaLUcpQVs5QdVAHCB6D2C524tMEFors9WkcLRm5BAfh4T/",
 		},
 		hostProxy: map[string]*ProxyStruct{},
 	}
@@ -62,7 +62,7 @@ func main() {
 	http.Handle("/", h)
 
 	server := &http.Server{
-		Addr:    ":8085",
+		Addr:    ":80",
 		Handler: h,
 	}
 	klog.Fatal(server.ListenAndServe())

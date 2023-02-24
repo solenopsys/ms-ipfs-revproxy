@@ -11,7 +11,7 @@ RUN go mod download
 
 COPY *.go ./
 
-COPY ./scripts /opt/scripts
+
 
 RUN GOOS=linux GOARCH=$TARGETARCH go build  -o /go-binary
 
