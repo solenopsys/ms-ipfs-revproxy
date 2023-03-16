@@ -54,7 +54,7 @@ func main() {
 
 	h := &ProxyHandlers{
 		hostTarget: map[string]string{
-			"uimatrix.solenopsys.org": "http://ipfs.alexstorm.solenopsys.org/ipfs/QmaLUcpQVs5QdVAHCB6D2C524tMEFors9WkcLRm5BAfh4T/",
+			"uimatrix.solenopsys.org": "http://ipfs.alpha.solenopsys.org/ipfs/QmaLUcpQVs5QdVAHCB6D2C524tMEFors9WkcLRm5BAfh4T/",
 		},
 		hostProxy: map[string]*ProxyStruct{},
 	}
