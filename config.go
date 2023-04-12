@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
@@ -12,13 +11,13 @@ import (
 )
 
 type ConfigIO struct {
-	clientset   *kubernetes.Clientset
-	mapping     map[string]uint16
-	mappingName string
+	clientSet       *kubernetes.Clientset
+	updateConfigMap func(map[string]string)
+	mappingName     string
 }
 
-func (k ConfigIO) startListen(updateConfigMap func(map[string]string)) {
-	watch, err := k.clientset.CoreV1().ConfigMaps("default").Watch(context.TODO(), metav1.ListOptions{})
+func (conf *ConfigIO) Listen() {
+	watch, err := conf.clientSet.CoreV1().ConfigMaps("default").Watch(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -34,21 +33,21 @@ func (k ConfigIO) startListen(updateConfigMap func(map[string]string)) {
 				configMap, ok := event.Object.(*v1.ConfigMap)
 				if !ok {
 					continue
+				} else if configMap.Name != conf.mappingName {
+					conf.updateConfigMap(configMap.Data)
 				}
-				updateConfigMap(configMap.Data)
 			}
 		case <-time.After(30 * time.Second):
-			fmt.Println("timed out")
+			klog.Infoln("Next interval")
 		}
 	}
 }
 
-func (k ConfigIO) UpdateMapping() (map[string]string, error) {
+func (conf *ConfigIO) LoadMapping() {
 	klog.Info("Load config...")
-	maps, err := k.clientset.CoreV1().ConfigMaps("default").Get(context.TODO(), k.mappingName, metav1.GetOptions{})
+	maps, err := conf.clientSet.CoreV1().ConfigMaps("default").Get(context.TODO(), conf.mappingName, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		klog.Fatal("Error load config: %s", err.Error())
 	}
-
-	return maps.Data, nil
+	conf.updateConfigMap(maps.Data)
 }

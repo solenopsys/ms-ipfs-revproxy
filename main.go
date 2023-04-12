@@ -1,69 +1,82 @@
 package main
 
 import (
+	"github.com/joho/godotenv"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
+	"os"
+	"path/filepath"
 )
 
-type ProxyStruct struct {
-	proxy *httputil.ReverseProxy
-	host  string
-}
+var devMode = os.Getenv("developerMode") == "true"
 
-type ProxyHandlers struct {
-	hostTarget map[string]string
-	hostProxy  map[string]*ProxyStruct
-}
+func getCubeConfig(devMode bool) (*rest.Config, error) {
+	if devMode {
+		var kubeconfigFile = os.Getenv("kubeconfigPath")
+		kubeConfigPath := filepath.Join(kubeconfigFile)
+		klog.Infof("Using kubeconfig: %s\n", kubeConfigPath)
 
-func (h *ProxyHandlers) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	host := r.Host
-
-	if fn, ok := h.hostProxy[host]; ok {
-		klog.Infof("Serve: %", fn.host)
-		r.Host = fn.host
-		fn.proxy.ServeHTTP(w, r)
-		return
-	}
-
-	if target, ok := h.hostTarget[host]; ok {
-		remoteUrl, err := url.Parse(target)
-		klog.Infof("process url: %", remoteUrl.Path)
+		kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 		if err != nil {
-			klog.Errorf("target parse fail:", err)
-			return
+			klog.Error("error getting Kubernetes config: %v\n", err)
+			os.Exit(1)
 		}
 
-		proxy := httputil.NewSingleHostReverseProxy(remoteUrl)
-		r.Host = remoteUrl.Host
-		klog.Errorf("host:", r.Host)
-		proxy.ServeHTTP(w, r)
-		h.hostProxy[host] = &ProxyStruct{proxy: proxy, host: r.Host}
+		return kubeConfig, nil
+	} else {
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			return nil, err
+		}
 
-		return
+		return config, nil
 	}
-	w.Write([]byte("403: Host forbidden " + host))
 }
 
-func updateConfig(map[string]string) {
-	// TODO: Update the configuration data in your application
-}
+//
+//func updateConfig(map[string]string) {
+//
+//	klog.Info("Load config...")
+//	// TODO: Update the configuration data in your application
+//}
 
 func main() {
 
+	if devMode {
+		err := godotenv.Load("configs/local.env")
+		if err != nil {
+			klog.Fatal("Error loading .env file")
+		}
+	}
+
+	config, err := getCubeConfig(devMode)
+	if err != nil {
+		klog.Info("Config init error...", err)
+		os.Exit(1)
+	}
+	clientSet, err := kubernetes.NewForConfig(config)
+
+	if err != nil {
+		klog.Fatal(err)
+	}
+
 	h := &ProxyHandlers{
-		hostTarget: map[string]string{
-			"uimatrix.solenopsys.org": "http://ipfs.alpha.solenopsys.org/ipfs/QmaLUcpQVs5QdVAHCB6D2C524tMEFors9WkcLRm5BAfh4T/",
+		hostTarget: map[string]string{},
+		hostProxy:  map[string]*ProxyHolder{},
+	}
+
+	io := &ConfigIO{
+		mappingName: "ipfs-reverse-proxy-mapping",
+		updateConfigMap: func(m map[string]string) {
+			klog.Info("Config updated...")
+			h.hostTarget = m
 		},
-		hostProxy: map[string]*ProxyStruct{},
+		clientSet: clientSet,
 	}
+	io.LoadMapping()
+	go io.Listen()
 
-	http.Handle("/", h)
-
-	server := &http.Server{
-		Addr:    ":80",
-		Handler: h,
-	}
-	klog.Fatal(server.ListenAndServe())
+	h.Start()
 }
