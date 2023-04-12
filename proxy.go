@@ -12,12 +12,13 @@ type ProxyHolder struct {
 	host  string
 }
 
-type ProxyHandlers struct {
+type ProxyPool struct {
+	port       string
 	hostTarget map[string]string
 	hostProxy  map[string]*ProxyHolder
 }
 
-func (h *ProxyHandlers) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	host := r.Host
 
 	if fn, ok := h.hostProxy[host]; ok {
@@ -43,10 +44,11 @@ func (h *ProxyHandlers) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	w.WriteHeader(http.StatusForbidden)
 	w.Write([]byte("403: Host forbidden " + host))
 }
 
-func (h *ProxyHandlers) Start() {
+func (h *ProxyPool) Start() {
 	http.Handle("/", h)
 
 	server := &http.Server{

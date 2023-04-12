@@ -35,13 +35,6 @@ func getCubeConfig(devMode bool) (*rest.Config, error) {
 	}
 }
 
-//
-//func updateConfig(map[string]string) {
-//
-//	klog.Info("Load config...")
-//	// TODO: Update the configuration data in your application
-//}
-
 func main() {
 
 	if devMode {
@@ -50,6 +43,8 @@ func main() {
 			klog.Fatal("Error loading .env file")
 		}
 	}
+
+	port := os.Getenv("server.Port")
 
 	config, err := getCubeConfig(devMode)
 	if err != nil {
@@ -62,13 +57,14 @@ func main() {
 		klog.Fatal(err)
 	}
 
-	h := &ProxyHandlers{
+	h := &ProxyPool{
+		port:       port,
 		hostTarget: map[string]string{},
 		hostProxy:  map[string]*ProxyHolder{},
 	}
 
 	io := &ConfigIO{
-		mappingName: "ipfs-reverse-proxy-mapping",
+		mappingName: "reverse-proxy-mapping",
 		updateConfigMap: func(m map[string]string) {
 			klog.Info("Config updated...")
 			h.hostTarget = m

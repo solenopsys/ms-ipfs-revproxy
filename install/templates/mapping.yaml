@@ -1,9 +1,8 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: ipfs-reverse-proxy-mapping
+  name: reverse-proxy-mapping
 data:
     mapping: |
-        /uimatrix.solenopsys.org/  /QmaLUcpQVs5QdVAHCB6D2C524tMEFors9WkcLRm5BAfh4T/
-        /solenopsys.org/  /QmaLUcpQVs5QdVAHCB6D2C524tMEFors9WkcLRm5BAfh4T/
+        /localhost/  /QmaLUcpQVs5QdVAHCB6D2C524tMEFors9WkcLRm5BAfh4T/
 
