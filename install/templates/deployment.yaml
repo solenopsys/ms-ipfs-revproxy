@@ -13,12 +13,12 @@ spec:
       labels:
         app: {{ .Values.selectorLabel }}
     spec:
-      serviceAccountName: {{ .Values.containers.router.serviceAccount }}
+      serviceAccountName: {{ .Values.container.serviceAccount }}
       containers:
-        - name:  {{ .Values.containers.router.name}}
-          image:  {{ .Values.containers.router.image}}
+        - name:  {{ .Values.container.name}}
+          image:  {{ .Values.container.image}}
           ports:
-            - containerPort: {{ .Values.containers.router.httpPort}}
+            - containerPort: {{ .Values.service.port}}
           env:
             - name: "server.Port"
               value: "{{ .Values.service.port}}"

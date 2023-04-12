@@ -9,3 +9,7 @@ container:
     name: revproxy
     image: registry.solenopsys.org/ms-ipfs-revproxy
     pullPolicy: Always
+    serviceAccount: "hc-infra"
+
+domainList:
+  - localhost: https://alpha.node.solenopsys.org/ipns/k51qzi5uqu5dmg9x0007u2e2kdw972w34is7u3oxf9lpakaokt7w3n1g6f3jun
