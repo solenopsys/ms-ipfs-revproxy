@@ -1,6 +1,6 @@
 apiVersion: v2
 name: ms-ipfs-revproxy
-version: 0.1.5
+version: 0.1.6
 description: IPFS reverse proxy
 icon: "http://alexstorm.solenopsys.org/apps/assets/ipfs-revproxy.svg"
 appVersion: 1.0.0

@@ -13,7 +13,6 @@ spec:
       labels:
         app: {{ .Values.selectorLabel }}
     spec:
-      serviceAccountName: {{ .Values.container.serviceAccount }}
       containers:
         - name:  {{ .Values.container.name}}
           image:  {{ .Values.container.image}}
