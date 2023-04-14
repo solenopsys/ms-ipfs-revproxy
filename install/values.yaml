@@ -12,4 +12,5 @@ container:
     serviceAccount: "hc-infra"
 
 domainList:
-  - localhost: https://alpha.node.solenopsys.org/ipns/k51qzi5uqu5dmg9x0007u2e2kdw972w34is7u3oxf9lpakaokt7w3n1g6f3jun
+  solenopsys.org: https://alpha.node.solenopsys.org/ipfs/QmcbcZ18iAXFSwnci6GQYQnML8MtQMe92EppggJVDDhaEk
+  auth.solenopsys.org: https://alpha.node.solenopsys.org/ipfs/QmcbcZ18iAXFSwnci6GQYQnML8MtQMe92EppggJVDDhaEk

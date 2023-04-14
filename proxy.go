@@ -19,7 +19,12 @@ type ProxyPool struct {
 }
 
 func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
 	host := r.Host
+
+	klog.Info("Request", host)
+	klog.Info("Mapping", h.hostTarget)
+	klog.Info("Proxies", h.hostProxy)
 
 	if fn, ok := h.hostProxy[host]; ok {
 		klog.Infof("Serve: %", fn.host)

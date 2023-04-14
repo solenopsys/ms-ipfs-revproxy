@@ -66,7 +66,7 @@ func main() {
 	io := &ConfigIO{
 		mappingName: "reverse-proxy-mapping",
 		updateConfigMap: func(m map[string]string) {
-			klog.Info("Config updated...")
+			klog.Info("Config updated...", m)
 			h.hostTarget = m
 		},
 		clientSet: clientSet,

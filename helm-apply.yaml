@@ -6,6 +6,6 @@ metadata:
 spec:
   chart: ms-ipfs-revproxy
   targetNamespace: default
-  version: 0.1.6
+  version: 0.1.11
   repo: https://helm.solenopsys.org
   helmVersion: v3

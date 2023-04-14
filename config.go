@@ -30,8 +30,12 @@ func (conf *ConfigIO) Listen() {
 				return
 			}
 			if event.Type == "MODIFIED" {
+				klog.Infoln("Modified")
 				configMap, ok := event.Object.(*v1.ConfigMap)
+
+				klog.Infoln("Config map name ", configMap.Name)
 				if !ok {
+					klog.Infoln("Modified not ok")
 					continue
 				} else if configMap.Name != conf.mappingName {
 					conf.updateConfigMap(configMap.Data)
@@ -49,5 +53,6 @@ func (conf *ConfigIO) LoadMapping() {
 	if err != nil {
 		klog.Fatal("Error load config: %s", err.Error())
 	}
+
 	conf.updateConfigMap(maps.Data)
 }
