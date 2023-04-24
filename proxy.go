@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 )
 
 type ProxyHolder struct {
@@ -60,5 +61,24 @@ func (h *ProxyPool) Start() {
 		Addr:    ":80",
 		Handler: h,
 	}
+
+	conf := map[string][]string{
+		"menu":    []string{"children"},
+		"article": []string{"items", "content"}}
+
+	hosts := []string{"alpha.node.solenopsys.org", "bravo.node.solenopsys.org", "charlie.node.solenopsys.org"}
+	dataCache := NewDagCache(hosts, 10*time.Hour, 20, conf)
+
+	http.HandleFunc("/dag", func(writer http.ResponseWriter, request *http.Request) {
+
+		key := request.URL.Query().Get("key")
+		cid := request.URL.Query().Get("cid")
+		resp0, err := dataCache.processQuery(key, cid)
+		if err != nil {
+			panic(err)
+		}
+
+		writer.Write(resp0)
+	})
 	klog.Fatal(server.ListenAndServe())
 }
