@@ -55,12 +55,8 @@ func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProxyPool) Start() {
-	http.Handle("/", h)
 
-	server := &http.Server{
-		Addr:    ":80",
-		Handler: h,
-	}
+	mux := http.NewServeMux()
 
 	conf := map[string][]string{
 		"menu":    []string{"children"},
@@ -69,7 +65,9 @@ func (h *ProxyPool) Start() {
 	hosts := []string{"alpha.node.solenopsys.org", "bravo.node.solenopsys.org", "charlie.node.solenopsys.org"}
 	dataCache := NewDagCache(hosts, 10*time.Hour, 20, conf)
 
-	http.HandleFunc("/dag", func(writer http.ResponseWriter, request *http.Request) {
+	mux.Handle("/", h)
+
+	mux.HandleFunc("/dag", func(writer http.ResponseWriter, request *http.Request) {
 
 		key := request.URL.Query().Get("key")
 		cid := request.URL.Query().Get("cid")
@@ -80,5 +78,6 @@ func (h *ProxyPool) Start() {
 
 		writer.Write(resp0)
 	})
-	klog.Fatal(server.ListenAndServe())
+
+	klog.Fatal(http.ListenAndServe(":80", mux))
 }
