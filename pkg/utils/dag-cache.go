@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"bytes"
@@ -27,7 +27,7 @@ func NewDagCache(hosts []string, expiration time.Duration, loadThreads int, conf
 	}
 }
 
-func (dc *DagCache) processQuery(key string, cid string) ([]byte, error) {
+func (dc *DagCache) ProcessQuery(key string, cid string) ([]byte, error) {
 
 	id := key + cid
 

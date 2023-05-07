@@ -2,15 +2,32 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: revproxy-ingress
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: zerossl-production
+    cert-manager.io/acme-challenge-type: dns01
+    cert-manager.io/acme-dns01-provider: route53
+    ingress.kubernetes.io/force-hsts: "true"
+    ingress.kubernetes.io/hsts-preload: "true"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/enable-cors: "true"
 spec:
+  tls:
+    {{- range $key, $value := .Values.domainList }}
+      - hosts:
+          - {{ $key }}
+        secretName: zeorssl-{{ $key }}-secret
+    {{- end }}
   rules:
-    - http:
+    {{- range $key, $value := .Values.domainList }}
+    - host: {{ $key }}
+      http:
         paths:
           - path: /
             pathType: ImplementationSpecific
             backend:
               service:
-                name:  {{ .Values.fullName }}
+                name:  "ms-ipfs-revproxy"
                 port:
-                  number: {{ .Values.service.port }}
-
+                  number: 80
+    {{- end }}

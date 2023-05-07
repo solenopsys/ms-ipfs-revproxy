@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/joho/godotenv"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -8,9 +9,13 @@ import (
 	"k8s.io/klog/v2"
 	"os"
 	"path/filepath"
+	"sc-bm-ipfs-revproxy/internal"
+	"sc-bm-ipfs-revproxy/pkg/utils"
 )
 
-var devMode = os.Getenv("developerMode") == "true"
+var Mode string
+
+const DEV_MODE = "dev"
 
 func getCubeConfig(devMode bool) (*rest.Config, error) {
 	if devMode {
@@ -34,8 +39,13 @@ func getCubeConfig(devMode bool) (*rest.Config, error) {
 		return config, nil
 	}
 }
+func init() {
+	flag.StringVar(&Mode, "mode", "", "a string var")
+}
 
 func main() {
+	flag.Parse()
+	devMode := Mode == DEV_MODE
 
 	if devMode {
 		err := godotenv.Load("configs/local.env")
@@ -57,19 +67,19 @@ func main() {
 		klog.Fatal(err)
 	}
 
-	h := &ProxyPool{
-		port:       port,
-		hostTarget: map[string]string{},
-		hostProxy:  map[string]*ProxyHolder{},
+	h := &utils.ProxyPool{
+		Port:       port,
+		HostTarget: map[string]string{},
+		HostProxy:  map[string]*utils.ProxyHolder{},
 	}
 
-	io := &ConfigIO{
-		mappingName: "reverse-proxy-mapping",
-		updateConfigMap: func(m map[string]string) {
+	io := &internal.ConfigIO{
+		MappingName: "reverse-proxy-mapping",
+		UpdateConfigMap: func(m map[string]string) {
 			klog.Info("Config updated...", m)
-			h.hostTarget = m
+			h.HostTarget = m
 		},
-		clientSet: clientSet,
+		ClientSet: clientSet,
 	}
 	io.LoadMapping()
 	go io.Listen()

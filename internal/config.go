@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"context"
@@ -11,13 +11,13 @@ import (
 )
 
 type ConfigIO struct {
-	clientSet       *kubernetes.Clientset
-	updateConfigMap func(map[string]string)
-	mappingName     string
+	ClientSet       *kubernetes.Clientset
+	UpdateConfigMap func(map[string]string)
+	MappingName     string
 }
 
 func (conf *ConfigIO) Listen() {
-	watch, err := conf.clientSet.CoreV1().ConfigMaps("default").Watch(context.TODO(), metav1.ListOptions{})
+	watch, err := conf.ClientSet.CoreV1().ConfigMaps("default").Watch(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -37,8 +37,8 @@ func (conf *ConfigIO) Listen() {
 				if !ok {
 					klog.Infoln("Modified not ok")
 					continue
-				} else if configMap.Name != conf.mappingName {
-					conf.updateConfigMap(configMap.Data)
+				} else if configMap.Name != conf.MappingName {
+					conf.UpdateConfigMap(configMap.Data)
 				}
 			}
 		case <-time.After(30 * time.Second):
@@ -49,10 +49,10 @@ func (conf *ConfigIO) Listen() {
 
 func (conf *ConfigIO) LoadMapping() {
 	klog.Info("Load config...")
-	maps, err := conf.clientSet.CoreV1().ConfigMaps("default").Get(context.TODO(), conf.mappingName, metav1.GetOptions{})
+	maps, err := conf.ClientSet.CoreV1().ConfigMaps("default").Get(context.TODO(), conf.MappingName, metav1.GetOptions{})
 	if err != nil {
 		klog.Fatal("Error load config: %s", err.Error())
 	}
 
-	conf.updateConfigMap(maps.Data)
+	conf.UpdateConfigMap(maps.Data)
 }

@@ -14,10 +14,10 @@ helm_build_push(){
 REGISTRY=registry.solenopsys.org
 NAME=ms-ipfs-revproxy
 ARCHS="linux/amd64,linux/arm64"
-VER=0.1.11
+VER=0.1.14
 
 
-build_push
+#build_push
 helm_build_push
 
 

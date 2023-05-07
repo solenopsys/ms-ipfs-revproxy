@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"k8s.io/klog/v2"
@@ -14,9 +14,9 @@ type ProxyHolder struct {
 }
 
 type ProxyPool struct {
-	port       string
-	hostTarget map[string]string
-	hostProxy  map[string]*ProxyHolder
+	Port       string
+	HostTarget map[string]string
+	HostProxy  map[string]*ProxyHolder
 }
 
 func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -24,17 +24,17 @@ func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	host := r.Host
 
 	klog.Info("Request", host)
-	klog.Info("Mapping", h.hostTarget)
-	klog.Info("Proxies", h.hostProxy)
+	klog.Info("Mapping", h.HostTarget)
+	klog.Info("Proxies", h.HostProxy)
 
-	if fn, ok := h.hostProxy[host]; ok {
+	if fn, ok := h.HostProxy[host]; ok {
 		klog.Infof("Serve: %", fn.host)
 		r.Host = fn.host
 		fn.proxy.ServeHTTP(w, r)
 		return
 	}
 
-	if target, ok := h.hostTarget[host]; ok {
+	if target, ok := h.HostTarget[host]; ok {
 		remoteUrl, err := url.Parse(target)
 		klog.Infof("process url: %", remoteUrl.Path)
 		if err != nil {
@@ -46,7 +46,7 @@ func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.Host = remoteUrl.Host
 		klog.Errorf("host:", r.Host)
 		proxy.ServeHTTP(w, r)
-		h.hostProxy[host] = &ProxyHolder{proxy: proxy, host: r.Host}
+		h.HostProxy[host] = &ProxyHolder{proxy: proxy, host: r.Host}
 
 		return
 	}
@@ -57,6 +57,8 @@ func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *ProxyPool) Start() {
 
 	mux := http.NewServeMux()
+
+	klog.Info("Start proxy server on port:", h.Port)
 
 	conf := map[string][]string{
 		"menu":    []string{"children"},
@@ -71,7 +73,7 @@ func (h *ProxyPool) Start() {
 
 		key := request.URL.Query().Get("key")
 		cid := request.URL.Query().Get("cid")
-		resp0, err := dataCache.processQuery(key, cid)
+		resp0, err := dataCache.ProcessQuery(key, cid)
 		if err != nil {
 			panic(err)
 		}
