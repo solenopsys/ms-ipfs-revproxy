@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 	"time"
 )
 
@@ -17,6 +18,7 @@ type ProxyPool struct {
 	Port       string
 	HostTarget map[string]string
 	HostProxy  map[string]*ProxyHolder
+	IpfsHosts  []string
 }
 
 func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +28,15 @@ func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	klog.Info("Request", host)
 	klog.Info("Mapping", h.HostTarget)
 	klog.Info("Proxies", h.HostProxy)
+
+	// Define the regular expression to match URLs that need to be rewritten
+	re := regexp.MustCompile("^(.*/)$")
+
+	// Check if the incoming request matches the regular expression
+	if re.MatchString(r.URL.Path) {
+		// Rewrite the URL to remove the "/api" prefix
+		r.URL.Path = re.ReplaceAllString(r.URL.Path, "/")
+	}
 
 	if fn, ok := h.HostProxy[host]; ok {
 		klog.Infof("Serve: %", fn.host)
@@ -64,8 +75,8 @@ func (h *ProxyPool) Start() {
 		"menu":    []string{"children"},
 		"article": []string{"items", "content"}}
 
-	hosts := []string{"alpha.node.solenopsys.org", "bravo.node.solenopsys.org", "charlie.node.solenopsys.org"}
-	dataCache := NewDagCache(hosts, 10*time.Hour, 20, conf)
+	// todo get from config
+	dataCache := NewDagCache(h.IpfsHosts, 10*time.Hour, 20, conf)
 
 	mux.Handle("/", h)
 
@@ -81,5 +92,5 @@ func (h *ProxyPool) Start() {
 		writer.Write(resp0)
 	})
 
-	klog.Fatal(http.ListenAndServe(":80", mux))
+	klog.Fatal(http.ListenAndServe(":"+h.Port, mux))
 }

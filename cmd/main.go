@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sc-bm-ipfs-revproxy/internal"
 	"sc-bm-ipfs-revproxy/pkg/utils"
+	"strings"
 )
 
 var Mode string
@@ -67,10 +68,14 @@ func main() {
 		klog.Fatal(err)
 	}
 
+	backsString := os.Getenv("ipfs.Backs")
+	hosts := strings.Split(backsString, " ")
+
 	h := &utils.ProxyPool{
 		Port:       port,
 		HostTarget: map[string]string{},
 		HostProxy:  map[string]*utils.ProxyHolder{},
+		IpfsHosts:  hosts,
 	}
 
 	io := &internal.ConfigIO{

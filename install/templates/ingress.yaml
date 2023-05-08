@@ -16,7 +16,7 @@ spec:
     {{- range $key, $value := .Values.domainList }}
       - hosts:
           - {{ $key }}
-        secretName: zeorssl-{{ $key }}-secret
+        secretName: zeorssl-{{ $key | replace "." "-" }}-secret
     {{- end }}
   rules:
     {{- range $key, $value := .Values.domainList }}

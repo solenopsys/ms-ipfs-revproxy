@@ -21,3 +21,5 @@ spec:
           env:
             - name: "server.Port"
               value: "{{ .Values.service.port}}"
+            - name: "ipfs.Backs"
+              value: "{{ .Values.ipfsBacks}}"
