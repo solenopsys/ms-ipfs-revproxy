@@ -1,4 +1,4 @@
-# IPFS reverse proxy 
+# IPFS reverse proxy  module 
 Service for public websites deployed to ipfs 
 
 ## Main config parameters
