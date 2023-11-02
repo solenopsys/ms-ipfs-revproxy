@@ -3,6 +3,7 @@ module sc-bm-ipfs-revproxy
 go 1.20
 
 require (
+	github.com/gorilla/mux v1.8.0
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipld/go-ipld-prime v0.20.0
 	github.com/joho/godotenv v1.5.1

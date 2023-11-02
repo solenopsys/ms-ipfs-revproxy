@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"github.com/gorilla/mux"
 	"k8s.io/klog/v2"
 	"net/http"
 	"net/http/httputil"
+
 	"net/url"
 	"regexp"
 	"time"
@@ -67,30 +69,43 @@ func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProxyPool) Start() {
 
-	mux := http.NewServeMux()
+	r := mux.NewRouter()
 
 	klog.Info("Start proxy server on port:", h.Port)
 
 	conf := map[string][]string{
-		"menu":    []string{"children"},
-		"article": []string{"items", "content"}}
+		"menu":    {"children"},
+		"article": {"items", "content"},
+	}
 
 	// todo get from config
 	dataCache := NewDagCache(h.IpfsHosts, 10*time.Hour, 20, conf)
+	sharedCache := NewSharedCache(h.IpfsHosts, 10*time.Hour, 20)
+	go sharedCache.LoadMappingAll()
 
-	mux.Handle("/", h)
-
-	mux.HandleFunc("/dag", func(writer http.ResponseWriter, request *http.Request) {
-
+	r.HandleFunc("/dag", func(writer http.ResponseWriter, request *http.Request) {
 		key := request.URL.Query().Get("key")
 		cid := request.URL.Query().Get("cid")
 		resp0, err := dataCache.ProcessQuery(key, cid)
 		if err != nil {
-			panic(err)
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
 		}
-
 		writer.Write(resp0)
-	})
+	}).Methods("GET")
 
-	klog.Fatal(http.ListenAndServe(":"+h.Port, mux))
+	r.HandleFunc("/shared/{libName}", func(writer http.ResponseWriter, request *http.Request) {
+		vars := mux.Vars(request)
+		libName := vars["libName"]
+		resp0, err := sharedCache.GetLib(libName)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writer.Write(resp0)
+	}).Methods("GET")
+
+	http.Handle("/", r) // Set the router as the default handler.
+
+	klog.Fatal(http.ListenAndServe(":"+h.Port, nil))
 }
