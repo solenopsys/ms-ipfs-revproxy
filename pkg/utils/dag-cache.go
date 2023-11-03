@@ -11,19 +11,18 @@ import (
 type DagCache struct {
 	cache      *cache.Cache
 	conf       map[string][]string
-	hosts      []string
 	expiration time.Duration
 	router     *Router
 }
 
-func NewDagCache(hosts []string, expiration time.Duration, loadThreads int, conf map[string][]string) *DagCache {
+func NewDagCache(httpLoader *HttpLoader, expiration time.Duration, conf map[string][]string) *DagCache {
 
 	return &DagCache{
-		cache:      cache.New(expiration, expiration*2),
-		conf:       conf,
-		hosts:      hosts,
+		cache: cache.New(expiration, expiration*2),
+		conf:  conf,
+
 		expiration: expiration,
-		router:     NewRouter(NewHttpLoader(hosts, loadThreads)),
+		router:     NewRouter(httpLoader),
 	}
 }
 

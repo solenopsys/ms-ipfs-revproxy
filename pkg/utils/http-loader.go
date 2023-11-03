@@ -59,7 +59,7 @@ func (dl *HttpLoader) load() {
 			}
 			continue
 		}
-		data, err := dl.httpGet(sCid)
+		data, err := dl.httpGet(sCid, false)
 		if err != nil {
 			klog.Error("Error http reques: ", err)
 			// dl.wg.Done()
@@ -76,8 +76,12 @@ func (dl *HttpLoader) load() {
 	}
 }
 
-func (dl *HttpLoader) httpGet(cid string) ([]byte, error) {
-	url := "http://" + dl.RandomHost() + "/ipfs/" + cid
+func (dl *HttpLoader) httpGetSubFile(cid string, filePath string, byName bool) ([]byte, error) {
+	var typeSelect = "ipfs"
+	if byName {
+		typeSelect = "ipns"
+	}
+	url := "http://" + dl.RandomHost() + "/" + typeSelect + "/" + cid + filePath
 	klog.Info("Load from: ", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -87,4 +91,8 @@ func (dl *HttpLoader) httpGet(cid string) ([]byte, error) {
 
 	all, err := ioutil.ReadAll(resp.Body)
 	return all, err
+}
+
+func (dl *HttpLoader) httpGet(cid string, byName bool) ([]byte, error) {
+	return dl.httpGetSubFile(cid, "", byName)
 }

@@ -79,9 +79,13 @@ func (h *ProxyPool) Start() {
 	}
 
 	// todo get from config
-	dataCache := NewDagCache(h.IpfsHosts, 10*time.Hour, 20, conf)
-	sharedCache := NewSharedCache(h.IpfsHosts, 10*time.Hour, 20)
+	httpLoader := NewHttpLoader(h.IpfsHosts, 10)
+	dataCache := NewDagCache(httpLoader, 10*time.Hour, conf)
+	sharedCache := NewSharedCache(httpLoader, 10*time.Hour)
 	go sharedCache.LoadMappingAll()
+	valueSelector := "microfrontend"
+	modulesMapping := NewPinningMapping("type", valueSelector, "name", true)
+	go modulesMapping.LoadMapping(valueSelector)
 
 	r.HandleFunc("/dag", func(writer http.ResponseWriter, request *http.Request) {
 		key := request.URL.Query().Get("key")
@@ -103,6 +107,26 @@ func (h *ProxyPool) Start() {
 			return
 		}
 		writer.Write(resp0)
+	}).Methods("GET")
+
+	r.HandleFunc("/modules/{company}/{module}/{file}", func(writer http.ResponseWriter, request *http.Request) {
+		vars := mux.Vars(request)
+		company := vars["company"]
+		module := vars["module"]
+		file := vars["file"]
+
+		cid, err := modulesMapping.GetCid("@" + company + "/" + module)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusNotFound)
+			return
+		}
+		body, err := httpLoader.httpGetSubFile(cid, "/"+file, true)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		writer.Write(body)
 	}).Methods("GET")
 
 	http.Handle("/", r) // Set the router as the default handler.
