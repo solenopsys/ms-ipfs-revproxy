@@ -106,7 +106,10 @@ func (h *ProxyPool) Start() {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		writer.Header().Set("Content-Type", "application/javascript")
 		writer.Write(resp0)
+
 	}).Methods("GET")
 
 	r.HandleFunc("/modules/{company}/{module}/{file}", func(writer http.ResponseWriter, request *http.Request) {
@@ -126,8 +129,12 @@ func (h *ProxyPool) Start() {
 			return
 		}
 
+		writer.Header().Set("Content-Type", "application/javascript")
 		writer.Write(body)
+
 	}).Methods("GET")
+
+	r.HandleFunc("/{_:.*}", h.ServeHTTP).Methods("GET")
 
 	http.Handle("/", r) // Set the router as the default handler.
 
