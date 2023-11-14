@@ -8,7 +8,7 @@ import (
 type Router struct {
 	loader     *HttpLoader
 	nextUid    uint64
-	dagLoaders map[uint64]*RecursiveDagLoader
+	dagLoaders map[uint64]DagIntf
 }
 
 func NewRouter(loader *HttpLoader) *Router {
@@ -16,7 +16,7 @@ func NewRouter(loader *HttpLoader) *Router {
 	router := &Router{
 		loader:     loader,
 		nextUid:    0,
-		dagLoaders: make(map[uint64]*RecursiveDagLoader),
+		dagLoaders: make(map[uint64]DagIntf),
 	}
 	go router.StartRoute()
 	return router
@@ -32,13 +32,14 @@ func (r *Router) StartRoute() {
 	}
 }
 
-func (r *Router) LoadNode(cid string, keys []string) datamodel.Node {
+func (r *Router) LoadNode(cid string, dagLoader DagIntf) datamodel.Node {
 	r.nextUid++
-	klog.Info("load cid: ", cid, " keys ", keys, " uid: ", r.nextUid)
-	dagLoader := NewRecursiveDagLoader(cid, keys, r.nextUid)
-	dagLoader.sendCidFunc = func(packet *HttpPacket) {
+
+	dagLoader.SetUid(r.nextUid)
+
+	dagLoader.SetCidFunc(func(packet *HttpPacket) {
 		r.loader.cids <- packet
-	}
+	})
 	r.dagLoaders[r.nextUid] = dagLoader
 	defer delete(r.dagLoaders, r.nextUid)
 	return dagLoader.Load()

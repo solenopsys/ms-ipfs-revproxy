@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-type RecursiveDagLoader struct {
+type RecursiveDagLoader struct { // todo remove it
 	rootCid       string
 	recursiveKeys []string
 	nodes         map[string]*datamodel.Node
@@ -23,7 +23,11 @@ type RecursiveDagLoader struct {
 	sendCidFunc   func(packet *HttpPacket)
 }
 
-func NewRecursiveDagLoader(rootCid string, recursiveKeys []string, uid uint64) *RecursiveDagLoader {
+func (dl *RecursiveDagLoader) SetCidFunc(fun func(packet *HttpPacket)) {
+	dl.sendCidFunc = fun
+}
+
+func NewRecursiveDagLoader(rootCid string, recursiveKeys []string) *RecursiveDagLoader {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &RecursiveDagLoader{
@@ -32,10 +36,14 @@ func NewRecursiveDagLoader(rootCid string, recursiveKeys []string, uid uint64) *
 		nodes:         make(map[string]*datamodel.Node),
 		raws:          make(map[string][]byte),
 		wg:            &sync.WaitGroup{},
-		uid:           uid,
 		ctx:           ctx,
 		cancel:        cancel,
 	}
+}
+
+func (dl *RecursiveDagLoader) SetUid(uid uint64) {
+	dl.uid = uid
+
 }
 
 func (dl *RecursiveDagLoader) keyContain(key string) bool {
@@ -75,7 +83,7 @@ func (dl *RecursiveDagLoader) ScanNode(node datamodel.Node, transform bool, cid 
 	if err != nil {
 		klog.Fatal(err)
 	}
-	if transform {
+	if cid != "" {
 		beginMap.AssembleKey().AssignString("cid")
 		beginMap.AssembleValue().AssignString(cid)
 	}
@@ -150,20 +158,22 @@ func (dl *RecursiveDagLoader) transformList(sourceNode datamodel.Node, transform
 
 		link, err := v.AsLink()
 		if err != nil {
-			klog.Fatal(err)
-		}
-		cid := link.String()
+			transformedNode.AssembleValue().AssignNode(dl.ScanNode(v, transform, ""))
+		} else {
+			cidLoad := link.String()
 
-		if transform {
-			if inject {
-				transformedNode.AssembleValue().AssignNode(dl.nodeFromCache(cid))
-			} else {
-				transformedNode.AssembleValue().AssignString(link.String())
+			if transform {
+				if inject {
+					transformedNode.AssembleValue().AssignNode(dl.nodeFromCache(cidLoad))
+				} else {
+					transformedNode.AssembleValue().AssignString(link.String())
+				}
+			} else if inject {
+				dl.wg.Add(1)
+				dl.sendCidFunc(&HttpPacket{Payload: cidLoad, Sender: dl.uid})
 			}
-		} else if inject {
-			dl.wg.Add(1)
-			dl.sendCidFunc(&HttpPacket{Payload: cid, Sender: dl.uid})
 		}
+
 	}
 
 	transformedNode.Finish()
