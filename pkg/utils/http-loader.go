@@ -52,7 +52,11 @@ func (dl *HttpLoader) Start() {
 func (dl *HttpLoader) load() {
 	for request := range dl.cids {
 		sCid := request.Payload.(string)
+
 		if data, found := dl.cache.Get(sCid); found {
+			if sCid == "Qmeek5S18VbJF5CvN5GdPJKd519aVw6SzPXn85ZzUfvfGh" {
+				println("OK")
+			}
 			dl.responses <- &HttpPacket{
 				Payload: data.(*HttpResponse),
 				Sender:  request.Sender,

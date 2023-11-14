@@ -76,7 +76,7 @@ func (h *ProxyPool) Start() {
 	conf := map[string][]string{
 		"menu":    {"children"},
 		"article": {"items", "content"},
-		"md":      {"children"},
+		"md":      {"children", "value"},
 	}
 
 	// todo get from config

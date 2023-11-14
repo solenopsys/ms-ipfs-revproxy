@@ -120,13 +120,15 @@ func (dl *RecursiveDagLoader) ScanNode(node datamodel.Node, transform bool, cid 
 						beginMap.AssembleValue().AssignNode(value)
 					}
 				} else {
-					cid := link.String()
+					cidLink := link.String()
 					if transform {
+						beginMap.AssembleKey().AssignString("cid")
+						beginMap.AssembleValue().AssignString(cidLink)
 						beginMap.AssembleKey().AssignNode(key)
-						beginMap.AssembleValue().AssignNode(dl.nodeFromCache(cid))
+						beginMap.AssembleValue().AssignNode(dl.nodeFromCache(cidLink))
 					} else {
 						dl.wg.Add(1)
-						dl.sendCidFunc(&HttpPacket{Payload: cid, Sender: dl.uid})
+						dl.sendCidFunc(&HttpPacket{Payload: cidLink, Sender: dl.uid})
 					}
 				}
 
@@ -158,7 +160,8 @@ func (dl *RecursiveDagLoader) transformList(sourceNode datamodel.Node, transform
 
 		link, err := v.AsLink()
 		if err != nil {
-			transformedNode.AssembleValue().AssignNode(dl.ScanNode(v, transform, ""))
+			subnode := dl.ScanNode(v, transform, "")
+			transformedNode.AssembleValue().AssignNode(subnode)
 		} else {
 			cidLoad := link.String()
 
@@ -200,6 +203,7 @@ func (dl *RecursiveDagLoader) ProcessResponse(resp *HttpResponse) {
 
 		dl.nodes[resp.Cid] = &node
 
+		println("Cid: ", resp.Cid, " ", node)
 		dl.ScanNode(node, false, resp.Cid)
 	}
 
