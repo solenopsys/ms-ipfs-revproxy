@@ -11,6 +11,7 @@ import (
 	"sync"
 )
 
+// todo need deep refactoring it trash
 type RecursiveDagLoader struct { // todo remove it
 	rootCid       string
 	recursiveKeys []string
@@ -122,8 +123,10 @@ func (dl *RecursiveDagLoader) ScanNode(node datamodel.Node, transform bool, cid 
 				} else {
 					cidLink := link.String()
 					if transform {
-						beginMap.AssembleKey().AssignString("cid")
-						beginMap.AssembleValue().AssignString(cidLink)
+						if cid == "" {
+							beginMap.AssembleKey().AssignString("cid")
+							beginMap.AssembleValue().AssignString(cidLink)
+						}
 						beginMap.AssembleKey().AssignNode(key)
 						beginMap.AssembleValue().AssignNode(dl.nodeFromCache(cidLink))
 					} else {
