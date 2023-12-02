@@ -155,31 +155,35 @@ func (dl *RecursiveDagLoader) transformList(sourceNode datamodel.Node, transform
 
 	listIterator := sourceNode.ListIterator()
 
-	for !listIterator.Done() {
-		_, v, err := listIterator.Next()
-		if err != nil {
-			klog.Fatal(err)
-		}
-
-		link, err := v.AsLink()
-		if err != nil {
-			subnode := dl.ScanNode(v, transform, "")
-			transformedNode.AssembleValue().AssignNode(subnode)
-		} else {
-			cidLoad := link.String()
-
-			if transform {
-				if inject {
-					transformedNode.AssembleValue().AssignNode(dl.nodeFromCache(cidLoad))
-				} else {
-					transformedNode.AssembleValue().AssignString(link.String())
-				}
-			} else if inject {
-				dl.wg.Add(1)
-				dl.sendCidFunc(&HttpPacket{Payload: cidLoad, Sender: dl.uid})
+	if listIterator != nil {
+		for !listIterator.Done() {
+			_, v, err := listIterator.Next()
+			if err != nil {
+				klog.Fatal(err)
 			}
-		}
 
+			link, err := v.AsLink()
+			if err != nil {
+				subnode := dl.ScanNode(v, transform, "")
+				transformedNode.AssembleValue().AssignNode(subnode)
+			} else {
+				cidLoad := link.String()
+
+				if transform {
+					if inject {
+						transformedNode.AssembleValue().AssignNode(dl.nodeFromCache(cidLoad))
+					} else {
+						transformedNode.AssembleValue().AssignString(link.String())
+					}
+				} else if inject {
+					dl.wg.Add(1)
+					dl.sendCidFunc(&HttpPacket{Payload: cidLoad, Sender: dl.uid})
+				}
+			}
+
+		}
+	} else if sourceNode.MapIterator() != nil {
+		return sourceNode
 	}
 
 	transformedNode.Finish()
