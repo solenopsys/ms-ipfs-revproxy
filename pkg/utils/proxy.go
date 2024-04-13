@@ -1,10 +1,11 @@
 package utils
 
 import (
-	"github.com/gorilla/mux"
-	"k8s.io/klog/v2"
 	"net/http"
 	"net/http/httputil"
+
+	"github.com/gorilla/mux"
+	"k8s.io/klog/v2"
 
 	"net/url"
 	"regexp"
@@ -74,6 +75,7 @@ func (h *ProxyPool) Start() {
 	klog.Info("Start proxy server on port:", h.Port)
 
 	conf := map[string][]string{
+		"group":   {"article", "children", "value"},
 		"menu":    {"children"},
 		"article": {"items", "content"},
 		"md":      {"children", "value"},

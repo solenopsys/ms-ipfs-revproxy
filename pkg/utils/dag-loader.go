@@ -2,13 +2,14 @@ package utils
 
 import (
 	"context"
+	"strings"
+	"sync"
+
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"k8s.io/klog/v2"
-	"strings"
-	"sync"
 )
 
 // todo need deep refactoring it trash
@@ -127,8 +128,15 @@ func (dl *RecursiveDagLoader) ScanNode(node datamodel.Node, transform bool, cid 
 							beginMap.AssembleKey().AssignString("cid")
 							beginMap.AssembleValue().AssignString(cidLink)
 						}
+
 						beginMap.AssembleKey().AssignNode(key)
-						beginMap.AssembleValue().AssignNode(dl.nodeFromCache(cidLink))
+						//	beginMap.AssembleValue().AssignNode(dl.nodeFromCache(cidLink))
+
+						if inject {
+							beginMap.AssembleValue().AssignNode(dl.nodeFromCache(cidLink))
+						} else {
+							beginMap.AssembleValue().AssignString(link.String())
+						}
 					} else {
 						dl.wg.Add(1)
 						dl.sendCidFunc(&HttpPacket{Payload: cidLink, Sender: dl.uid})
