@@ -1,11 +1,12 @@
 package utils
 
 import (
-	"github.com/patrickmn/go-cache"
 	"io/ioutil"
-	"k8s.io/klog/v2"
 	"math/rand"
 	"net/http"
+
+	"github.com/patrickmn/go-cache"
+	"k8s.io/klog/v2"
 )
 
 type HttpPacket struct {
@@ -54,9 +55,6 @@ func (dl *HttpLoader) load() {
 		sCid := request.Payload.(string)
 
 		if data, found := dl.cache.Get(sCid); found {
-			if sCid == "Qmeek5S18VbJF5CvN5GdPJKd519aVw6SzPXn85ZzUfvfGh" {
-				println("OK")
-			}
 			dl.responses <- &HttpPacket{
 				Payload: data.(*HttpResponse),
 				Sender:  request.Sender,

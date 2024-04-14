@@ -57,6 +57,13 @@ func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		proxy := httputil.NewSingleHostReverseProxy(remoteUrl)
+
+		proxy.Director = func(req *http.Request) {
+
+			print("Proxying---------: ", req.URL.Path)
+			//	req.URL.Path = "/index.html"
+			proxy.Director(req)
+		}
 		r.Host = remoteUrl.Host
 		klog.Errorf("host:", r.Host)
 		proxy.ServeHTTP(w, r)
