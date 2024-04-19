@@ -2,9 +2,10 @@ package utils
 
 import (
 	"bytes"
+	"time"
+
 	"github.com/ipld/go-ipld-prime/codec/json"
 	"github.com/patrickmn/go-cache"
-	"time"
 )
 
 type DagCache struct {
@@ -50,5 +51,4 @@ func (dc *DagCache) ProcessQuery(key string, cid string) ([]byte, error) {
 
 		return data, nil
 	}
-
 }

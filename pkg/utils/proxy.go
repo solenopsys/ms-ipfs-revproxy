@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/gorilla/mux"
-	"k8s.io/klog/v2"
-
 	"net/url"
 	"regexp"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/patrickmn/go-cache"
+	"k8s.io/klog/v2"
 )
 
 type ProxyHolder struct {
@@ -28,9 +29,9 @@ func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	host := r.Host
 
-	klog.Info("Request", host)
-	klog.Info("Mapping", h.HostTarget)
-	klog.Info("Proxies", h.HostProxy)
+	klog.Info("Request ", host)
+	klog.Info("Mapping ", h.HostTarget)
+	//klog.Info("Proxies", h.HostProxy)
 
 	// Define the regular expression to match URLs that need to be rewritten
 	re := regexp.MustCompile("^(.*/)$")
@@ -57,13 +58,9 @@ func (h *ProxyPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		proxy := httputil.NewSingleHostReverseProxy(remoteUrl)
-
-		proxy.Director = func(req *http.Request) {
-
-			print("Proxying---------: ", req.URL.Path)
-			//	req.URL.Path = "/index.html"
-			proxy.Director(req)
-		}
+		// proxy.Director = func(req *http.Request) {
+		// 	req.URL.Path = "/index.html"
+		// }
 		r.Host = remoteUrl.Host
 		klog.Errorf("host:", r.Host)
 		proxy.ServeHTTP(w, r)
@@ -92,6 +89,9 @@ func (h *ProxyPool) Start() {
 	httpLoader := NewHttpLoader(h.IpfsHosts, 10)
 	dataCache := NewDagCache(httpLoader, 10*time.Hour, conf)
 	sharedCache := NewSharedCache(httpLoader, 10*time.Hour)
+
+	t := 10 * time.Second
+	plainCache := cache.New(t, t*2)
 	go sharedCache.LoadMappingAll()
 	valueSelector := "microfrontend"
 	modulesMapping := NewPinningMapping("type", valueSelector, "name", true)
@@ -106,6 +106,28 @@ func (h *ProxyPool) Start() {
 			return
 		}
 		writer.Write(resp0)
+	}).Methods("GET")
+
+	r.HandleFunc("/cached", func(writer http.ResponseWriter, request *http.Request) {
+		cid := request.URL.Query().Get("cid")
+
+		if data, found := plainCache.Get(cid); found {
+
+			klog.Info("From cache: ", cid)
+			writer.Write(data.([]byte))
+		} else {
+			bytes, err := httpLoader.httpGetJson(cid, false)
+
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			plainCache.Set(cid, bytes, cache.DefaultExpiration)
+
+			writer.Write(bytes)
+		}
+
 	}).Methods("GET")
 
 	r.HandleFunc("/shared/{libName}", func(writer http.ResponseWriter, request *http.Request) {
@@ -133,7 +155,7 @@ func (h *ProxyPool) Start() {
 			http.Error(writer, err.Error(), http.StatusNotFound)
 			return
 		}
-		body, err := httpLoader.httpGetSubFile(cid, "/"+file, true)
+		body, err := httpLoader.httpGetSubFile(cid, "/"+file, true, "cbor")
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
