@@ -155,7 +155,7 @@ func (h *ProxyPool) Start() {
 			http.Error(writer, err.Error(), http.StatusNotFound)
 			return
 		}
-		body, err := httpLoader.httpGetSubFile(cid, "/"+file, true, "cbor")
+		body, err := httpLoader.httpGetSubFile(cid, "/"+file, true, false)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return

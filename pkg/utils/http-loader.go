@@ -78,13 +78,16 @@ func (dl *HttpLoader) load() {
 	}
 }
 
-func (dl *HttpLoader) httpGetSubFile(cid string, filePath string, byName bool, format string) ([]byte, error) {
+func (dl *HttpLoader) httpGetSubFile(cid string, filePath string, byName bool, json bool) ([]byte, error) {
 	var typeSelect = "ipfs"
 	if byName {
 		typeSelect = "ipns"
 	}
 
-	url := "http://" + dl.RandomHost() + "/" + typeSelect + "/" + cid + filePath + "?format=dag-" + format
+	var url = "http://" + dl.RandomHost() + "/" + typeSelect + "/" + cid + filePath
+	if json {
+		url = url + "?format=dag-json"
+	}
 	klog.Info("Load from: ", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -97,9 +100,9 @@ func (dl *HttpLoader) httpGetSubFile(cid string, filePath string, byName bool, f
 }
 
 func (dl *HttpLoader) httpGet(cid string, byName bool) ([]byte, error) {
-	return dl.httpGetSubFile(cid, "", byName, "cbor")
+	return dl.httpGetSubFile(cid, "", byName, false)
 }
 
 func (dl *HttpLoader) httpGetJson(cid string, byName bool) ([]byte, error) {
-	return dl.httpGetSubFile(cid, "", byName, "json")
+	return dl.httpGetSubFile(cid, "", byName, true)
 }

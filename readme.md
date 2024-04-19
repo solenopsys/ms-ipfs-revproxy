@@ -8,3 +8,5 @@ DomainList:
 
 ## config map
 reverse-proxy-mapping 
+
+nerdctl build --platform=amd64  --progress=plain --output type=image,name=registry.*/solenopsys/ms-ipfs-revproxy:latest,push=true .
